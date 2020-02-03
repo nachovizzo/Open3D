@@ -37,12 +37,11 @@
 #include <list>
 
 // clang-format off
-#include "PoissonRecon/Src/PreProcessor.h"
-#include "PoissonRecon/Src/MyMiscellany.h"
-#include "PoissonRecon/Src/CmdLineParser.h"
-#include "PoissonRecon/Src/FEMTree.h"
-#include "PoissonRecon/Src/PPolynomial.h"
-#include "PoissonRecon/Src/PointStreamData.h"
+#include "PoissonRecon/PreProcessor.h"
+#include "PoissonRecon/MyMiscellany.h"
+#include "PoissonRecon/FEMTree.h"
+#include "PoissonRecon/PPolynomial.h"
+#include "PoissonRecon/ThreadPool.h"
 // clang-format on
 
 namespace open3d {
@@ -741,7 +740,7 @@ TriangleMesh::CreateFromPointCloudPoisson(const PointCloud& pcd,
         utility::LogError("[CreateFromPointCloudPoisson] pcd has no normals");
     }
 
-    ThreadPool::Init((ThreadPool::ParallelType)(int)ThreadPool::NONE, 1);
+    ThreadPool::Init();
 
     auto mesh = std::make_shared<TriangleMesh>();
     std::vector<double> densities;
