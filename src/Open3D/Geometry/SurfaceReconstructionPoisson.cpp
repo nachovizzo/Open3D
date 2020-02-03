@@ -741,13 +741,7 @@ TriangleMesh::CreateFromPointCloudPoisson(const PointCloud& pcd,
         utility::LogError("[CreateFromPointCloudPoisson] pcd has no normals");
     }
 
-#ifdef _OPENMP
-    ThreadPool::Init((ThreadPool::ParallelType)(int)ThreadPool::OPEN_MP,
-                     std::thread::hardware_concurrency());
-#else
-    ThreadPool::Init((ThreadPool::ParallelType)(int)ThreadPool::THREAD_POOL,
-                     std::thread::hardware_concurrency());
-#endif
+    ThreadPool::Init((ThreadPool::ParallelType)(int)ThreadPool::NONE, 1);
 
     auto mesh = std::make_shared<TriangleMesh>();
     std::vector<double> densities;
