@@ -166,8 +166,9 @@ public:
         mesh_->vertex_normals_ = pcd.normals_;
         mesh_->vertex_colors_ = pcd.colors_;
         for (size_t vidx = 0; vidx < pcd.points_.size(); ++vidx) {
-            vertices.emplace_back(new BallPivotingVertex(
-                    vidx, pcd.points_[vidx], pcd.normals_[vidx]));
+            vertices.emplace_back(new BallPivotingVertex(static_cast<int>(vidx),
+                                                         pcd.points_[vidx],
+                                                         pcd.normals_[vidx]));
         }
     }
 
@@ -317,7 +318,7 @@ public:
         bool ret = normal.dot(v0->normal_) > -1e-16 &&
                    normal.dot(v1->normal_) > -1e-16 &&
                    normal.dot(v2->normal_) > -1e-16;
-        utility::LogDebug("[IsCompatible] retuns = {}", ret);
+        utility::LogDebug("[IsCompatible] returns = {}", ret);
         return ret;
     }
 
@@ -388,7 +389,7 @@ public:
                                      mp, candidate->point_, tgt->point_,
                                      opp->point_) < 1e-12)) {
                 utility::LogDebug(
-                        "[FindCandidateVertex] candidate {:d} is interesecting "
+                        "[FindCandidateVertex] candidate {:d} is intersecting "
                         "the existing triangle",
                         candidate->idx_);
                 continue;

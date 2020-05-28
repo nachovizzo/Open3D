@@ -27,6 +27,7 @@
 #include <numeric>
 #include <vector>
 
+#include "Open3D/IO/ClassIO/FileFormatIO.h"
 #include "Open3D/IO/ClassIO/TriangleMeshIO.h"
 #include "Open3D/Utility/Console.h"
 #include "Open3D/Utility/FileSystem.h"
@@ -88,6 +89,10 @@ struct IntArray : public IntArrayBase {
 
     size_t size() const override { return adapter.elem_count; }
 };
+
+FileGeometry ReadFileGeometryTypeGLTF(const std::string& path) {
+    return FileGeometry(CONTAINS_TRIANGLES | CONTAINS_POINTS);
+}
 
 bool ReadTriangleMeshFromGLTF(const std::string& filename,
                               geometry::TriangleMesh& mesh,
@@ -510,8 +515,8 @@ bool WriteTriangleMeshToGLTF(const std::string& filename,
     positions_accessor.maxValues.push_back(max_bound[1]);
     positions_accessor.maxValues.push_back(max_bound[2]);
     model.accessors.push_back(positions_accessor);
-    gltf_primitive.attributes.insert(
-            std::make_pair("POSITION", model.accessors.size() - 1));
+    gltf_primitive.attributes.insert(std::make_pair(
+            "POSITION", static_cast<int>(model.accessors.size()) - 1));
 
     write_vertex_normals = write_vertex_normals && mesh.HasVertexNormals();
     if (write_vertex_normals) {
@@ -539,8 +544,8 @@ bool WriteTriangleMeshToGLTF(const std::string& filename,
         }
 
         model.accessors.push_back(normals_accessor);
-        gltf_primitive.attributes.insert(
-                std::make_pair("NORMAL", model.accessors.size() - 1));
+        gltf_primitive.attributes.insert(std::make_pair(
+                "NORMAL", static_cast<int>(model.accessors.size()) - 1));
     }
 
     write_vertex_colors = write_vertex_colors && mesh.HasVertexColors();
@@ -569,8 +574,8 @@ bool WriteTriangleMeshToGLTF(const std::string& filename,
         }
 
         model.accessors.push_back(colors_accessor);
-        gltf_primitive.attributes.insert(
-                std::make_pair("COLOR_0", model.accessors.size() - 1));
+        gltf_primitive.attributes.insert(std::make_pair(
+                "COLOR_0", static_cast<int>(model.accessors.size()) - 1));
     }
 
     gltf_primitive.mode = TINYGLTF_MODE_TRIANGLES;

@@ -31,7 +31,7 @@
 #include "open3d_pybind/geometry/geometry.h"
 #include "open3d_pybind/geometry/geometry_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
 
 void pybind_lineset(py::module &m) {
     py::class_<geometry::LineSet, PyGeometry3D<geometry::LineSet>,
@@ -58,12 +58,12 @@ void pybind_lineset(py::module &m) {
             .def("has_lines", &geometry::LineSet::HasLines,
                  "Returns ``True`` if the object contains lines.")
             .def("has_colors", &geometry::LineSet::HasColors,
-                 "Returns ``True`` if the object's lines contain contain "
+                 "Returns ``True`` if the object's lines contain "
                  "colors.")
             .def("get_line_coordinate", &geometry::LineSet::GetLineCoordinate,
                  "line_index"_a)
             .def("paint_uniform_color", &geometry::LineSet::PaintUniformColor,
-                 "Assigns each line in the line set the same color.")
+                 "Assigns each line in the line set the same color.", "color"_a)
             .def_static("create_from_point_cloud_correspondences",
                         &geometry::LineSet::CreateFromPointCloudCorrespondences,
                         "Factory function to create a LineSet from two "
@@ -127,3 +127,5 @@ void pybind_lineset(py::module &m) {
 }
 
 void pybind_lineset_methods(py::module &m) {}
+
+}  // namespace open3d

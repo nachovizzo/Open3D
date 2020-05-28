@@ -35,7 +35,7 @@
 #include "open3d_pybind/geometry/geometry.h"
 #include "open3d_pybind/geometry/geometry_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
 
 void pybind_pointcloud(py::module &m) {
     py::class_<geometry::PointCloud, PyGeometry3D<geometry::PointCloud>,
@@ -67,22 +67,19 @@ void pybind_pointcloud(py::module &m) {
             .def("paint_uniform_color",
                  &geometry::PointCloud::PaintUniformColor, "color"_a,
                  "Assigns each point in the PointCloud the same color.")
-            .def("select_down_sample", &geometry::PointCloud::SelectDownSample,
+            .def("select_by_index", &geometry::PointCloud::SelectByIndex,
                  "Function to select points from input pointcloud into output "
-                 "pointcloud. ``indices``: "
-                 "Indices of points to be selected. ``invert``: Set to "
-                 "``True`` to "
-                 "invert the selection of indices.",
+                 "pointcloud.",
                  "indices"_a, "invert"_a = false)
             .def("voxel_down_sample", &geometry::PointCloud::VoxelDownSample,
                  "Function to downsample input pointcloud into output "
                  "pointcloud with "
-                 "a voxel",
+                 "a voxel. Normals and colors are averaged if they exist.",
                  "voxel_size"_a)
             .def("voxel_down_sample_and_trace",
                  &geometry::PointCloud::VoxelDownSampleAndTrace,
                  "Function to downsample using "
-                 "geometry::PointCloud::VoxelDownSample also records point "
+                 "geometry::PointCloud::VoxelDownSample. Also records point "
                  "cloud index before downsampling",
                  "voxel_size"_a, "min_bound"_a, "max_bound"_a,
                  "approximate_class"_a = false)
@@ -108,9 +105,9 @@ void pybind_pointcloud(py::module &m) {
                          geometry::PointCloud::Crop,
                  "Function to crop input pointcloud into output pointcloud",
                  "bounding_box"_a)
-            .def("remove_none_finite_points",
-                 &geometry::PointCloud::RemoveNoneFinitePoints,
-                 "Function to remove none-finite points from the PointCloud",
+            .def("remove_non_finite_points",
+                 &geometry::PointCloud::RemoveNonFinitePoints,
+                 "Function to remove non-finite points from the PointCloud",
                  "remove_nan"_a = true, "remove_infinite"_a = true)
             .def("remove_radius_outlier",
                  &geometry::PointCloud::RemoveRadiusOutliers,
@@ -136,6 +133,11 @@ void pybind_pointcloud(py::module &m) {
                  &geometry::PointCloud::OrientNormalsTowardsCameraLocation,
                  "Function to orient the normals of a point cloud",
                  "camera_location"_a = Eigen::Vector3d(0.0, 0.0, 0.0))
+            .def("orient_normals_consistent_tangent_plane",
+                 &geometry::PointCloud::OrientNormalsConsistentTangentPlane,
+                 "Function to orient the normals with respect to consistent "
+                 "tangent planes",
+                 "k"_a)
             .def("compute_point_cloud_distance",
                  &geometry::PointCloud::ComputePointCloudDistance,
                  "For each point in the source point cloud, compute the "
@@ -164,7 +166,10 @@ void pybind_pointcloud(py::module &m) {
                  &geometry::PointCloud::HiddenPointRemoval,
                  "Removes hidden points from a point cloud and returns a mesh "
                  "of the remaining points. Based on Katz et al. 'Direct "
-                 "Visibility of Point Sets', 2007.",
+                 "Visibility of Point Sets', 2007. Additional information "
+                 "about the choice of radius for noisy point clouds can be "
+                 "found in Mehra et. al. 'Visibility of Noisy Point Cloud "
+                 "Data', 2010.",
                  "camera_location"_a, "radius"_a)
             .def("cluster_dbscan", &geometry::PointCloud::ClusterDBSCAN,
                  "Cluster PointCloud using the DBSCAN algorithm  Ester et al., "
@@ -190,20 +195,18 @@ void pybind_pointcloud(py::module &m) {
                     "depth"_a, "intrinsic"_a,
                     "extrinsic"_a = Eigen::Matrix4d::Identity(),
                     "depth_scale"_a = 1000.0, "depth_trunc"_a = 1000.0,
-                    "stride"_a = 1)
-            .def_static(
-                    "create_from_rgbd_image",
-                    &geometry::PointCloud::CreateFromRGBDImage,
-                    R"(Factory function to create a pointcloud from an RGB-D image and a
-        camera. Given depth value d at (u, v) image coordinate, the corresponding 3d
-        point is:
-
-              - z = d / depth_scale
+                    "stride"_a = 1, "project_valid_depth_only"_a = true)
+            .def_static("create_from_rgbd_image",
+                        &geometry::PointCloud::CreateFromRGBDImage,
+                        "Factory function to create a pointcloud from an RGB-D "
+                        "image and a        camera. Given depth value d at (u, "
+                        "v) image coordinate, the corresponding 3d point is: "
+                        R"(- z = d / depth_scale
               - x = (u - cx) * z / fx
-              - y = (v - cy) * z / fy
-        )",
-                    "image"_a, "intrinsic"_a,
-                    "extrinsic"_a = Eigen::Matrix4d::Identity())
+              - y = (v - cy) * z / fy)",
+                        "image"_a, "intrinsic"_a,
+                        "extrinsic"_a = Eigen::Matrix4d::Identity(),
+                        "project_valid_depth_only"_a = true)
             .def_readwrite("points", &geometry::PointCloud::points_,
                            "``float64`` array of shape ``(num_points, 3)``, "
                            "use ``numpy.asarray()`` to access data: Points "
@@ -225,7 +228,7 @@ void pybind_pointcloud(py::module &m) {
             m, "PointCloud", "paint_uniform_color",
             {{"color", "RGB color for the PointCloud."}});
     docstring::ClassMethodDocInject(
-            m, "PointCloud", "select_down_sample",
+            m, "PointCloud", "select_by_index",
             {{"indices", "Indices of points to be selected."},
              {"invert",
               "Set to ``True`` to invert the selection of indices."}});
@@ -246,7 +249,7 @@ void pybind_pointcloud(py::module &m) {
             m, "PointCloud", "crop",
             {{"bounding_box", "AxisAlignedBoundingBox to crop points"}});
     docstring::ClassMethodDocInject(
-            m, "PointCloud", "remove_none_finite_points",
+            m, "PointCloud", "remove_non_finite_points",
             {{"remove_nan", "Remove NaN values from the PointCloud"},
              {"remove_infinite",
               "Remove infinite values from the PointCloud"}});
@@ -274,6 +277,11 @@ void pybind_pointcloud(py::module &m) {
             m, "PointCloud", "orient_normals_towards_camera_location",
             {{"camera_location",
               "Normals are oriented with towards the camera_location."}});
+    docstring::ClassMethodDocInject(
+            m, "PointCloud", "orient_normals_consistent_tangent_plane",
+            {{"k",
+              "Number of k nearest neighbors used in constructing the "
+              "Riemannian graph used to propogate normal orientation."}});
     docstring::ClassMethodDocInject(m, "PointCloud",
                                     "compute_point_cloud_distance",
                                     {{"target", "The target point cloud."}});
@@ -307,8 +315,24 @@ void pybind_pointcloud(py::module &m) {
               "Number of initial points to be considered inliers in each "
               "iteration."},
              {"num_iterations", "Number of iterations."}});
-    docstring::ClassMethodDocInject(m, "PointCloud", "create_from_depth_image");
-    docstring::ClassMethodDocInject(m, "PointCloud", "create_from_rgbd_image");
+    docstring::ClassMethodDocInject(
+            m, "PointCloud", "create_from_depth_image",
+            {{"depth",
+              "The input depth image can be either a float image, or a "
+              "uint16_t image."},
+             {"intrinsic", "Intrinsic parameters of the camera."},
+             {"extrnsic", "Extrinsic parameters of the camera."},
+             {"depth_scale", "The depth is scaled by 1 / depth_scale."},
+             {"depth_trunc", "Truncated at depth_trunc distance."},
+             {"stride",
+              "Sampling factor to support coarse point cloud extraction."}});
+    docstring::ClassMethodDocInject(
+            m, "PointCloud", "create_from_rgbd_image",
+            {{"image", "The input image."},
+             {"intrinsic", "Intrinsic parameters of the camera."},
+             {"extrnsic", "Extrinsic parameters of the camera."}});
 }
 
 void pybind_pointcloud_methods(py::module &m) {}
+
+}  // namespace open3d

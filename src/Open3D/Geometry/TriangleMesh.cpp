@@ -52,7 +52,10 @@ TriangleMesh &TriangleMesh::Clear() {
     triangle_normals_.clear();
     adjacency_list_.clear();
     triangle_uvs_.clear();
-    texture_.Clear();
+    materials_.clear();
+    triangle_material_ids_.clear();
+    textures_.clear();
+
     return *this;
 }
 
@@ -62,9 +65,10 @@ TriangleMesh &TriangleMesh::Transform(const Eigen::Matrix4d &transformation) {
     return *this;
 }
 
-TriangleMesh &TriangleMesh::Rotate(const Eigen::Matrix3d &R, bool center) {
+TriangleMesh &TriangleMesh::Rotate(const Eigen::Matrix3d &R,
+                                   const Eigen::Vector3d &center) {
     MeshBase::Rotate(R, center);
-    RotateNormals(R, triangle_normals_, center);
+    RotateNormals(R, triangle_normals_);
     return *this;
 }
 
@@ -92,9 +96,10 @@ TriangleMesh &TriangleMesh::operator+=(const TriangleMesh &mesh) {
     if (HasAdjacencyList()) {
         ComputeAdjacencyList();
     }
-    if (HasTriangleUvs() || HasTexture()) {
+    if (HasTriangleUvs() || HasTextures() || HasTriangleMaterialIds()) {
         utility::LogError(
-                "[TriangleMesh] copy of uvs and texture is not implemented "
+                "[TriangleMesh] copy of uvs and texture and per-triangle "
+                "material ids is not implemented "
                 "yet");
     }
     return (*this);
@@ -427,7 +432,9 @@ std::shared_ptr<TriangleMesh> TriangleMesh::FilterSmoothTaubin(
 std::shared_ptr<PointCloud> TriangleMesh::SamplePointsUniformlyImpl(
         size_t number_of_points,
         std::vector<double> &triangle_areas,
-        double surface_area) const {
+        double surface_area,
+        bool use_triangle_normal,
+        int seed) {
     // triangle areas to cdf
     triangle_areas[0] /= surface_area;
     for (size_t tidx = 1; tidx < triangles_.size(); ++tidx) {
@@ -438,13 +445,19 @@ std::shared_ptr<PointCloud> TriangleMesh::SamplePointsUniformlyImpl(
     // sample point cloud
     bool has_vert_normal = HasVertexNormals();
     bool has_vert_color = HasVertexColors();
-    std::random_device rd;
-    std::mt19937 mt(rd());
+    if (seed == -1) {
+        std::random_device rd;
+        seed = rd();
+    }
+    std::mt19937 mt(seed);
     std::uniform_real_distribution<double> dist(0.0, 1.0);
     auto pcd = std::make_shared<PointCloud>();
     pcd->points_.resize(number_of_points);
-    if (has_vert_normal) {
+    if (has_vert_normal || use_triangle_normal) {
         pcd->normals_.resize(number_of_points);
+    }
+    if (use_triangle_normal && !HasTriangleNormals()) {
+        ComputeTriangleNormals(true);
     }
     if (has_vert_color) {
         pcd->colors_.resize(number_of_points);
@@ -463,10 +476,13 @@ std::shared_ptr<PointCloud> TriangleMesh::SamplePointsUniformlyImpl(
             pcd->points_[point_idx] = a * vertices_[triangle(0)] +
                                       b * vertices_[triangle(1)] +
                                       c * vertices_[triangle(2)];
-            if (has_vert_normal) {
+            if (has_vert_normal && !use_triangle_normal) {
                 pcd->normals_[point_idx] = a * vertex_normals_[triangle(0)] +
                                            b * vertex_normals_[triangle(1)] +
                                            c * vertex_normals_[triangle(2)];
+            }
+            if (use_triangle_normal) {
+                pcd->normals_[point_idx] = triangle_normals_[tidx];
             }
             if (has_vert_color) {
                 pcd->colors_[point_idx] = a * vertex_colors_[triangle(0)] +
@@ -482,7 +498,9 @@ std::shared_ptr<PointCloud> TriangleMesh::SamplePointsUniformlyImpl(
 }
 
 std::shared_ptr<PointCloud> TriangleMesh::SamplePointsUniformly(
-        size_t number_of_points) const {
+        size_t number_of_points,
+        bool use_triangle_normal /* = false */,
+        int seed /* = -1 */) {
     if (number_of_points <= 0) {
         utility::LogError("[SamplePointsUniformly] number_of_points <= 0");
     }
@@ -496,13 +514,15 @@ std::shared_ptr<PointCloud> TriangleMesh::SamplePointsUniformly(
     double surface_area = GetSurfaceArea(triangle_areas);
 
     return SamplePointsUniformlyImpl(number_of_points, triangle_areas,
-                                     surface_area);
+                                     surface_area, use_triangle_normal, seed);
 }
 
 std::shared_ptr<PointCloud> TriangleMesh::SamplePointsPoissonDisk(
         size_t number_of_points,
         double init_factor /* = 5 */,
-        const std::shared_ptr<PointCloud> pcl_init /* = nullptr */) const {
+        const std::shared_ptr<PointCloud> pcl_init /* = nullptr */,
+        bool use_triangle_normal /* = false */,
+        int seed /* = -1 */) {
     if (number_of_points <= 0) {
         utility::LogError("[SamplePointsPoissonDisk] number_of_points <= 0");
     }
@@ -529,7 +549,8 @@ std::shared_ptr<PointCloud> TriangleMesh::SamplePointsPoissonDisk(
     std::shared_ptr<PointCloud> pcl;
     if (pcl_init == nullptr) {
         pcl = SamplePointsUniformlyImpl(size_t(init_factor * number_of_points),
-                                        triangle_areas, surface_area);
+                                        triangle_areas, surface_area,
+                                        use_triangle_normal, seed);
     } else {
         pcl = std::make_shared<PointCloud>();
         pcl->points_ = pcl_init->points_;
@@ -1400,13 +1421,13 @@ TriangleMesh::ClusterConnectedTriangles() const {
         triangle_queue.push(tidx);
         triangle_clusters[tidx] = cluster_idx;
         while (!triangle_queue.empty()) {
-            tidx = triangle_queue.front();
+            int cluster_tidx = triangle_queue.front();
             triangle_queue.pop();
 
             cluster_n_triangles++;
-            cluster_area += GetTriangleArea(tidx);
+            cluster_area += GetTriangleArea(cluster_tidx);
 
-            for (auto tnb : adjacency_list[tidx]) {
+            for (auto tnb : adjacency_list[cluster_tidx]) {
                 if (triangle_clusters[tnb] == -1) {
                     triangle_queue.push(tnb);
                     triangle_clusters[tnb] = cluster_idx;
@@ -1493,7 +1514,7 @@ void TriangleMesh::RemoveVerticesByMask(const std::vector<bool> &vertex_mask) {
     std::unordered_map<int, int> vertex_map;
     for (size_t from_vidx = 0; from_vidx < vertices_.size(); ++from_vidx) {
         if (!vertex_mask[from_vidx]) {
-            vertex_map[from_vidx] = to_vidx;
+            vertex_map[static_cast<int>(from_vidx)] = static_cast<int>(to_vidx);
             vertices_[to_vidx] = vertices_[from_vidx];
             if (has_normal) {
                 vertex_normals_[to_vidx] = vertex_normals_[from_vidx];
@@ -1524,6 +1545,87 @@ void TriangleMesh::RemoveVerticesByMask(const std::vector<bool> &vertex_mask) {
         }
     }
     RemoveTrianglesByMask(triangle_mask);
+}
+
+std::shared_ptr<TriangleMesh> TriangleMesh::SelectByIndex(
+        const std::vector<size_t> &indices, bool cleanup) const {
+    if (HasTriangleUvs()) {
+        utility::LogWarning(
+                "[SelectByIndex] This mesh contains triangle uvs that are "
+                "not handled in this function");
+    }
+    auto output = std::make_shared<TriangleMesh>();
+    bool has_triangle_normals = HasTriangleNormals();
+    bool has_vertex_normals = HasVertexNormals();
+    bool has_vertex_colors = HasVertexColors();
+
+    std::vector<int> new_vert_ind(vertices_.size(), -1);
+    for (const auto &sel_vidx : indices) {
+        if (sel_vidx < 0 || sel_vidx >= vertices_.size()) {
+            utility::LogWarning(
+                    "[SelectByIndex] indices contains index {} out of range. "
+                    "It is ignored.",
+                    sel_vidx);
+            continue;
+        }
+        if (new_vert_ind[sel_vidx] >= 0) {
+            continue;
+        }
+        new_vert_ind[sel_vidx] = int(output->vertices_.size());
+        output->vertices_.push_back(vertices_[sel_vidx]);
+        if (has_vertex_colors) {
+            output->vertex_colors_.push_back(vertex_colors_[sel_vidx]);
+        }
+        if (has_vertex_normals) {
+            output->vertex_normals_.push_back(vertex_normals_[sel_vidx]);
+        }
+    }
+    for (size_t tidx = 0; tidx < triangles_.size(); ++tidx) {
+        int nvidx0 = new_vert_ind[triangles_[tidx](0)];
+        int nvidx1 = new_vert_ind[triangles_[tidx](1)];
+        int nvidx2 = new_vert_ind[triangles_[tidx](2)];
+        if (nvidx0 >= 0 && nvidx1 >= 0 && nvidx2 >= 0) {
+            output->triangles_.push_back(
+                    Eigen::Vector3i(nvidx0, nvidx1, nvidx2));
+            if (has_triangle_normals) {
+                output->triangle_normals_.push_back(triangle_normals_[tidx]);
+            }
+        }
+    }
+
+    if (cleanup) {
+        output->RemoveDuplicatedVertices();
+        output->RemoveDuplicatedTriangles();
+        output->RemoveUnreferencedVertices();
+        output->RemoveDegenerateTriangles();
+    }
+    utility::LogDebug(
+            "Triangle mesh sampled from {:d} vertices and {:d} triangles to "
+            "{:d} vertices and {:d} triangles.",
+            (int)vertices_.size(), (int)triangles_.size(),
+            (int)output->vertices_.size(), (int)output->triangles_.size());
+    return output;
+}  // namespace geometry
+
+std::shared_ptr<TriangleMesh> TriangleMesh::Crop(
+        const AxisAlignedBoundingBox &bbox) const {
+    if (bbox.IsEmpty()) {
+        utility::LogError(
+                "[CropTriangleMesh] AxisAlignedBoundingBox either has zeros "
+                "size, or has wrong bounds.");
+    }
+    return SelectByIndex(bbox.GetPointIndicesWithinBoundingBox(vertices_));
+}
+
+std::shared_ptr<TriangleMesh> TriangleMesh::Crop(
+        const OrientedBoundingBox &bbox) const {
+    if (bbox.IsEmpty()) {
+        utility::LogError(
+                "[CropTriangleMesh] AxisAlignedBoundingBox either has zeros "
+                "size, or has wrong bounds.");
+        return std::make_shared<TriangleMesh>();
+    }
+    return SelectByIndex(bbox.GetPointIndicesWithinBoundingBox(vertices_));
 }
 
 std::unordered_map<Eigen::Vector2i,

@@ -35,7 +35,7 @@
 #include "open3d_pybind/docstring.h"
 #include "open3d_pybind/io/io.h"
 
-using namespace open3d;
+namespace open3d {
 
 void pybind_sensor(py::module &m) {
     static const std::unordered_map<std::string, std::string>
@@ -137,7 +137,8 @@ void pybind_sensor(py::module &m) {
             m, "AzureKinectMKVReader", "AzureKinect mkv file reader.");
     azure_kinect_mkv_reader.def(py::init([]() { return io::MKVReader(); }));
     azure_kinect_mkv_reader
-            .def("is_opened", &io::MKVReader::IsOpened, "Is mkv file opened.")
+            .def("is_opened", &io::MKVReader::IsOpened,
+                 "Check if the mkv file  is opened.")
             .def("open", &io::MKVReader::Open, "filename"_a,
                  "Open an mkv playback.")
             .def("close", &io::MKVReader::Close,
@@ -164,3 +165,5 @@ void pybind_sensor(py::module &m) {
     docstring::ClassMethodDocInject(m, "AzureKinectMKVReader", "next_frame",
                                     map_shared_argument_docstrings);
 }
+
+}  // namespace open3d

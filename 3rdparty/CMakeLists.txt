@@ -1,9 +1,9 @@
-
 find_package(PkgConfig QUIET)
 find_package(OpenGL    QUIET)
 find_package(pybind11  QUIET)
 
 if (PKGCONFIG_FOUND)
+    pkg_search_module(FLANN           flann           QUIET)
     pkg_search_module(EIGEN3          eigen3>=3.2.7   QUIET)
     pkg_search_module(GLFW            glfw3           QUIET)
     pkg_search_module(GLEW            glew            QUIET)
@@ -24,8 +24,30 @@ macro(INSTALL_HEADERS source)
             PATTERN     ".gitignore"    EXCLUDE)
 endmacro()
 
+# Check 3rdparty submodules are present:
+# when adding a new git submodule, put in a check for one of the files from the module
+# git pull does not notify users that submodules have been updated, this check
+# will let developers know that their submodule list is out of date
+# Updated Modules:
+# 2020-05-15 Added dependency on Dear ImGui
+if (EXISTS "${PROJECT_SOURCE_DIR}/3rdparty/pybind11/include/pybind11/pybind11.h"
+    AND EXISTS "${PROJECT_SOURCE_DIR}/3rdparty/fmt/include/fmt/format.h"
+    AND EXISTS "${PROJECT_SOURCE_DIR}/3rdparty/imgui/imgui.h"
+   )
+# updated submodules are present
+else ()
+    message(FATAL_ERROR "3rdparty submodules are missing
+if you are using git, to update submodules run:
+  git submodule update --init --recursive")
+endif ()
+
 # dirent
-Directories("${CMAKE_CURRENT_SOURCE_DIR}/dirent" dirent_INCLUDE_DIRS)
+if (WIN32)
+    message(STATUS "On windows, so using 3rdparty/dirent")
+    Directories("${CMAKE_CURRENT_SOURCE_DIR}/dirent" dirent_INCLUDE_DIRS)
+else ()
+    message(STATUS "Using system dirent")
+endif ()
 
 # Eigen 3.2.7 version is required for pybind11 included in Open3D
 if (BUILD_EIGEN3)
@@ -44,7 +66,13 @@ if (BUILD_EIGEN3)
 endif ()
 
 # flann
-Directories("${CMAKE_CURRENT_SOURCE_DIR}/flann"  flann_INCLUDE_DIRS)
+if (BUILD_FLANN OR NOT FLANN_FOUND)
+  message(STATUS "Using open3d's flann")
+  Directories("${CMAKE_CURRENT_SOURCE_DIR}/flann"  FLANN_INCLUDE_DIRS)
+else ()
+  message(STATUS "Using system flann ${FLANN_VERSION}")
+endif ()
+message(STATUS "Flann includes ${FLANN_INCLUDE_DIRS}")
 
 # GLEW
 if (BUILD_GLEW)
@@ -103,37 +131,16 @@ endif ()
 # Azure Kinect
 include(azure_kinect/azure_kinect.cmake)
 
-# JSONCPP
-if ((APPLE) AND ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU"))
-    # It is a known bug that g++ on OSX only supports libstdc++
-    # The jsoncpp installed by brew by default is compiled with libc++
-    # If the two libraries are linked together, they break the build
-    # https://github.com/open-source-parsers/jsoncpp/issues/597
-    # https://github.com/IntelVCL/Open3D/issues/9
-    message(STATUS "Building JSONCPP from source, without installing headers")
-    add_subdirectory(jsoncpp)
-    set(BUILD_JSONCPP ON)
-else ()
-    if (BUILD_JSONCPP)
-        message(STATUS "Building JSONCPP from source (BUILD_JSONCPP=ON)")
-    elseif (JSONCPP_FOUND)
-        message(STATUS "Using installed JSONCPP ${JSONCPP_VERSION}")
-    else ()
-        message(STATUS "Unable to find JSONCPP installed in the system")
-        message(STATUS "Building JSONCPP from source")
-        set(BUILD_JSONCPP ON)
-    endif ()
+# JSONCPP is always built from source to avoid ABI compatibility issues
+message(STATUS "Building JSONCPP from source")
+add_subdirectory(jsoncpp)
 
-    if (BUILD_JSONCPP)
-        add_subdirectory(jsoncpp)
-    endif ()
-endif ()
 
 # liblzf
 Directories("${CMAKE_CURRENT_SOURCE_DIR}/liblzf" liblzf_INCLUDE_DIRS)
 
 # tritriintersect
-Directories("${CMAKE_CURRENT_SOURCE_DIR}/tomasakeninemoeller" tomasakeninemoeller_INCLUDE_DIRS)
+Directories("${CMAKE_CURRENT_SOURCE_DIR}/tomasakeninemoeller/include" tomasakeninemoeller_INCLUDE_DIRS)
 
 # PNG
 if (BUILD_PNG)
@@ -198,19 +205,20 @@ endif ()
 if (BUILD_TINYFILEDIALOGS)
     message(STATUS "Building TINYFILEDIALOGS from source")
     add_subdirectory(tinyfiledialogs)
-    set(tinyfiledialogs_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/tinyfiledialogs")
+    set(tinyfiledialogs_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/tinyfiledialogs/include")
     set(tinyfiledialogs_LIBRARIES tinyfiledialogs)
 else ()
     message(SEND_ERROR "TINYFILEDIALOGS dependency not met.")
 endif ()
 
-# tinygltf
-Directories("${CMAKE_CURRENT_SOURCE_DIR}/tinygltf" tinygltf_INCLUDE_DIRS)
+# tinygltf (don't use Directories(), as the examples/common/ directory includes
+# imgui.h, which we don't want coming before the real imgui path)
+set(tinygltf_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/tinygltf")
 
 # tinyobjloader
 message(STATUS "Building tinyobjloader from source")
 include_directories("tinyobjloader/")
-add_library(tinyobjloader STATIC tinyobjloader/tiny_obj_loader.cc)
+add_library(tinyobjloader STATIC tinyobjloader/tinyobjloader/tiny_obj_loader.cc)
 if (NOT BUILD_SHARED_LIBS)
   install(TARGETS tinyobjloader
         RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
@@ -309,18 +317,93 @@ if (BUILD_UNIT_TESTS)
     set(googletest_LIBRARIES googletest)
 endif()
 
+# benchmark
+if (BUILD_BENCHMARKS)
+    # turn off installing and testing of the benchmark lib
+    set( BENCHMARK_ENABLE_INSTALL  OFF CACHE BOOL "This should be OFF. Enables installing the benchmark lib" ) 
+    set( BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "This should be OFF. Enables gtest framework for the benchmark lib" )
+    set( BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "This should be OFF. Enables tests for the benchmark lib" )
+    add_subdirectory(benchmark)
+    # set the cache vars introduced by the benchmark lib as advanced to not
+    # clutter the cmake interfaces
+    mark_as_advanced( BENCHMARK_ENABLE_INSTALL 
+                      BENCHMARK_ENABLE_GTEST_TESTS 
+                      BENCHMARK_ENABLE_TESTING 
+                      BENCHMARK_ENABLE_ASSEMBLY_TESTS
+                      BENCHMARK_DOWNLOAD_DEPENDENCIES
+                      BENCHMARK_BUILD_32_BITS
+                      BENCHMARK_ENABLE_EXCEPTIONS
+                      BENCHMARK_ENABLE_LTO
+                      BENCHMARK_USE_LIBCXX
+                      )
+endif()
+
 # fmt library
 set(fmt_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/fmt/include)
 INSTALL_HEADERS(fmt)
 
 # PoissonRecon
-set(poisson_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/)
+set(poisson_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/PoissonRecon)
 
+# Filament library
+if (ENABLE_GUI)
+    if (BUILD_FILAMENT)
+        set(FILAMENT_CC_PATH ${CMAKE_C_COMPILER})
+        set(FILAMENT_CXX_PATH ${CMAKE_CXX_COMPILER})
+        # Filament can only be compiled with Clang and Visual Studio, not GCC
+        if (UNIX AND NOT APPLE AND NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+            unset(FILAMENT_CC_PATH)
+            unset(FILAMENT_CXX_PATH)
+            # Find if a clang binary exists
+            find_program(FILAMENT_CC_PATH NAMES clang-7 clang)
+            find_program(FILAMENT_CXX_PATH NAMES clang++-7 clang++)
+
+            # If it does, check that it is at least version 7 (required by
+            # Filament)
+            if (FILAMENT_CXX_PATH)
+                # Can't use check_c_source_compiles() because it uses the
+                # current compiler. Also, CMake appears to have no way to make
+                # a temporary file, so we have to do it ourselves. Since we are
+                # guaranteed to be on Unix here, using /tmp is safe.
+                set(CHKVER_C /tmp/open3d.checkclang.c)
+                file(WRITE ${CHKVER_C} 
+"#if __clang_major__ < 7
+#error Need clang >= 7
+#endif
+int main(int argc, char *argv[]) { return 0; }"
+                    )
+                execute_process(COMMAND ${FILAMENT_CXX_PATH} -c -o /dev/null ${CHKVER_C}
+                                ERROR_VARIABLE CLANG_NOT_USABLE)
+                if (CLANG_NOT_USABLE)
+                    unset(FILAMENT_CC_PATH)
+                    unset(FILAMENT_CXX_PATH)
+                endif()
+                file(REMOVE ${CHKVER_C})
+            endif()
+
+            # If the version is not >= 7, then disable GUI
+            if (NOT FILAMENT_CXX_PATH)
+                message(WARNING "Filament requires Clang >= 7, it cannot be built with GCC.")
+                message(WARNING  "ENABLE_GUI is set to OFF")
+                set(ENABLE_GUI OFF)
+            endif()
+        endif()
+    endif()
+    if (ENABLE_GUI)
+        if (BUILD_FILAMENT)
+            message(STATUS "Building Filament from source")
+            include(filament/filament_build.cmake)
+        else()
+            message(STATUS "Using prebuilt Filament libraries")
+            include(filament/filament_download.cmake)
+        endif()
+    endif ()
+endif()
 
 list(APPEND 3RDPARTY_INCLUDE_DIRS
-     # ${dirent_INCLUDE_DIRS} # fails on Linux, seems to require Windows headers
+     ${dirent_INCLUDE_DIRS}
      ${EIGEN3_INCLUDE_DIRS}
-     ${flann_INCLUDE_DIRS}
+     ${FLANN_INCLUDE_DIRS}
      ${GLEW_INCLUDE_DIRS}
      ${GLFW_INCLUDE_DIRS}
      ${JPEG_TURBO_INCLUDE_DIRS}
@@ -332,13 +415,25 @@ list(APPEND 3RDPARTY_INCLUDE_DIRS
      ${rply_INCLUDE_DIRS}
      ${tinyfiledialogs_INCLUDE_DIRS}
      ${tinygltf_INCLUDE_DIRS}
-     ${tinyfobjloader_INCLUDE_DIRS}
+     ${tinyobjloader_INCLUDE_DIRS}
      ${qhull_INCLUDE_DIRS}
      ${googletest_INCLUDE_DIRS}
      ${fmt_INCLUDE_DIRS}
      ${k4a_INCLUDE_DIRS}
      ${poisson_INCLUDE_DIRS}
 )
+
+if (ENABLE_GUI)
+list(APPEND 3RDPARTY_INCLUDE_DIRS
+     ${filament_INCLUDE_DIRS}
+)
+endif()
+
+if (ENABLE_GUI)
+list(APPEND 3RDPARTY_INCLUDE_DIRS
+     ${filament_INCLUDE_DIRS}
+)
+endif()
 
 # set 3RDPARTY_INCLUDE_DIRS_AT_INSTALL
 # Open3D's header only dependes on Eigen and GL headers
@@ -360,7 +455,18 @@ list(APPEND 3RDPARTY_LIBRARY_DIRS
 )
 
 # set 3RDPARTY_LIBRARIES
+if (ENABLE_GUI)
+    list(APPEND 3RDPARTY_LIBRARIES
+         ${filament_LIBRARIES}
+    )
+    if (UNIX AND NOT APPLE)
+        # GUI needs to be able to send Expose events, which needs to link
+        # against libX11 if using system GLFW.
+        list(APPEND 3RDPARTY_LIBRARIES "-lX11")
+    endif() 
+endif()
 list(APPEND 3RDPARTY_LIBRARIES
+     ${FLANN_LIBRARIES}
      ${GLEW_LIBRARIES}
      ${GLFW_LIBRARIES}
      ${JPEG_TURBO_LIBRARIES}
@@ -382,9 +488,6 @@ if (NOT BUILD_GLEW)
 endif ()
 if (NOT BUILD_GLFW)
     list(APPEND PRE_BUILT_3RDPARTY_LIBRARIES ${GLFW_LIBRARIES})
-endif ()
-if (NOT BUILD_JSONCPP)
-    list(APPEND PRE_BUILT_3RDPARTY_LIBRARIES ${JSONCPP_LIBRARIES})
 endif ()
 if (NOT BUILD_PNG)
     list(APPEND PRE_BUILT_3RDPARTY_LIBRARIES ${PNG_LIBRARIES})

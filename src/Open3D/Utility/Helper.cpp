@@ -26,7 +26,9 @@
 
 #include "Open3D/Utility/Helper.h"
 
+#include <algorithm>
 #include <cctype>
+#include <random>
 #include <unordered_set>
 
 #ifdef _WIN32
@@ -67,6 +69,13 @@ std::string& StripString(std::string& str, const std::string& chars) {
     return LeftStripString(RightStripString(str, chars), chars);
 }
 
+std::string ToLower(const std::string& str) {
+    std::string out = str;
+    std::transform(str.begin(), str.end(), out.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    return out;
+}
+
 // Count the length of current word starting from start_pos
 size_t WordLength(const std::string& doc,
                   size_t start_pos,
@@ -91,10 +100,16 @@ size_t WordLength(const std::string& doc,
 
 void Sleep(int milliseconds) {
 #ifdef _WIN32
-    Sleep(milliseconds);
+    ::Sleep(milliseconds);
 #else
     usleep(milliseconds * 1000);
 #endif  // _WIN32
+}
+
+int UniformRandInt(const int min, const int max) {
+    static thread_local std::mt19937 generator(std::random_device{}());
+    std::uniform_int_distribution<int> distribution(min, max);
+    return distribution(generator);
 }
 
 }  // namespace utility

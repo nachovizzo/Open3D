@@ -31,14 +31,14 @@
 #include "open3d_pybind/visualization/visualization.h"
 #include "open3d_pybind/visualization/visualization_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
 
 void pybind_renderoption(py::module &m) {
     // open3d.visualization.RenderOption
     py::class_<visualization::RenderOption,
                std::shared_ptr<visualization::RenderOption>>
             renderoption(m, "RenderOption",
-                         "Defines rendering options for visulizer.");
+                         "Defines rendering options for visualizer.");
     py::detail::bind_default_constructor<visualization::RenderOption>(
             renderoption);
     renderoption
@@ -137,7 +137,7 @@ void pybind_renderoption(py::module &m) {
                                    "MeshShadeOption");
     enum_mesh_shade_option.attr("__doc__") = docstring::static_property(
             py::cpp_function([](py::handle arg) -> std::string {
-                return "Enum class for msh shading for ``TriangleMesh``.";
+                return "Enum class for mesh shading for ``TriangleMesh``.";
             }),
             py::none(), py::none(), "");
     enum_mesh_shade_option
@@ -173,3 +173,5 @@ void pybind_renderoption(py::module &m) {
 }
 
 void pybind_renderoption_method(py::module &m) {}
+
+}  // namespace open3d
