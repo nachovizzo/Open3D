@@ -24,6 +24,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
+#include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Keypoints/ISSKeypointDetector.h"
 #include "open3d_pybind/docstring.h"
 #include "open3d_pybind/keypoints/keypoints.h"
