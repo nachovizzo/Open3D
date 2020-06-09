@@ -30,6 +30,8 @@
 
 namespace open3d {
 
-void pybind_iss_methods(py::module &m);
+void pybind_registration(py::module &m);
+
+void pybind_iss_detector(py::module &m);
 
 }  // namespace open3d

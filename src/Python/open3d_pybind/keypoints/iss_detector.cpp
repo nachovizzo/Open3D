@@ -30,7 +30,7 @@
 
 namespace open3d {
 
-void pybind_iss_methods(py::module &m) {
+void pybind_iss_detector(py::module &m) {
     m.def("compute_iss_keypoints", &keypoints::ComputeISSKeypoints,
           "Function to compute ISS keypoints for a point cloud", "input"_a);
     docstring::FunctionDocInject(m, "compute_iss_keypoints",
