@@ -51,6 +51,7 @@ from open3d.open3d_pybind import integration
 from open3d.open3d_pybind import io
 from open3d.open3d_pybind import odometry
 from open3d.open3d_pybind import registration
+from open3d.open3d_pybind import keypoints
 from open3d.open3d_pybind import utility
 from open3d.open3d_pybind import visualization
 

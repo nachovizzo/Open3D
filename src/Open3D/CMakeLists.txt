@@ -12,6 +12,7 @@ add_subdirectory(Geometry)
 add_subdirectory(Integration)
 add_subdirectory(Odometry)
 add_subdirectory(Registration)
+add_subdirectory(Keypoints)
 add_subdirectory(Utility)
 add_subdirectory(IO)
 if (ENABLE_GUI)
@@ -27,6 +28,7 @@ ADD_SOURCE_GROUP(Geometry)
 ADD_SOURCE_GROUP(Integration)
 ADD_SOURCE_GROUP(Odometry)
 ADD_SOURCE_GROUP(Registration)
+ADD_SOURCE_GROUP(Keypoints)
 ADD_SOURCE_GROUP(Utility)
 ADD_SOURCE_GROUP(IO)
 if (ENABLE_GUI)
@@ -58,6 +60,7 @@ add_library(${CMAKE_PROJECT_NAME}
     $<TARGET_OBJECTS:Integration>
     $<TARGET_OBJECTS:Odometry>
     $<TARGET_OBJECTS:Registration>
+    $<TARGET_OBJECTS:Keypoints>
     $<TARGET_OBJECTS:Utility>
     $<TARGET_OBJECTS:IO>
     $<TARGET_OBJECTS:GUI>

@@ -1,3 +1,4 @@
+
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
@@ -22,49 +23,18 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
-// ----------------------------------------------------------------------------
 
-#include "open3d_pybind/open3d_pybind.h"
-#include "open3d_pybind/camera/camera.h"
-#include "open3d_pybind/color_map/color_map.h"
-#include "open3d_pybind/core/container.h"
-#include "open3d_pybind/geometry/geometry.h"
-#include "open3d_pybind/integration/integration.h"
-#include "open3d_pybind/io/io.h"
-#include "open3d_pybind/odometry/odometry.h"
-#include "open3d_pybind/registration/registration.h"
+#include "Open3D/Keypoints/ISSKeypointDetector.h"
+#include "open3d_pybind/docstring.h"
 #include "open3d_pybind/keypoints/keypoints.h"
-#include "open3d_pybind/utility/utility.h"
-#include "open3d_pybind/visualization/visualization.h"
-
-#include "Open3D/Utility/Console.h"
 
 namespace open3d {
 
-PYBIND11_MODULE(open3d_pybind, m) {
-    open3d::utility::Logger::i().print_fcn_ = [](const std::string& msg) {
-        py::print(msg);
-    };
-
-    m.doc() = "Python binding of Open3D";
-
-    // Check open3d CXX11_ABI with
-    // import open3d; print(open3d.open3d._GLIBCXX_USE_CXX11_ABI)
-    m.add_object("_GLIBCXX_USE_CXX11_ABI",
-                 _GLIBCXX_USE_CXX11_ABI ? Py_True : Py_False);
-
-    // Register this first, other submodule (e.g. odometry) might depend on this
-    pybind_utility(m);
-    pybind_core(m);
-    pybind_camera(m);
-    pybind_color_map(m);
-    pybind_geometry(m);
-    pybind_integration(m);
-    pybind_io(m);
-    pybind_registration(m);
-    pybind_keypoints(m);
-    pybind_odometry(m);
-    pybind_visualization(m);
+void pybind_iss_methods(py::module &m) {
+    m.def("compute_iss_keypoints", &keypoints::ComputeISSKeypoints,
+          "Function to compute ISS keypoints for a point cloud", "input"_a);
+    docstring::FunctionDocInject(m, "compute_iss_keypoints",
+                                 {{"input", "The Input point cloud."}});
 }
 
 }  // namespace open3d
