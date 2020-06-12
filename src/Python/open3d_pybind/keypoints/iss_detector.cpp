@@ -25,7 +25,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Keypoints/ISSKeypointDetector.h"
+#include "Open3D/Keypoints/ISSDetector.h"
 #include "open3d_pybind/docstring.h"
 #include "open3d_pybind/keypoints/keypoints.h"
 
@@ -33,9 +33,13 @@ namespace open3d {
 
 void pybind_iss_detector(py::module &m) {
     m.def("compute_iss_keypoints", &keypoints::ComputeISSKeypoints,
-          "Function to compute ISS keypoints for a point cloud", "input"_a);
-    docstring::FunctionDocInject(m, "compute_iss_keypoints",
-                                 {{"input", "The Input point cloud."}});
+          "Function to compute ISS keypoints for a point cloud", "input"_a,
+          "salient_radius"_a, "non_max_radius"_a);
+    docstring::FunctionDocInject(
+            m, "compute_iss_keypoints",
+            {{"input", "The Input point cloud."},
+             {"salient_radius", "The radius where to search neighbour"},
+             {"non_max_radiop", "The non maxima supression radius"}});
 }
 
 }  // namespace open3d
