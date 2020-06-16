@@ -39,7 +39,7 @@ bool SelectionPolygonVolume::ConvertToJsonValue(Json::Value &value) const {
     Json::Value polygon_array;
     for (const auto &point : bounding_polygon_) {
         Json::Value point_object;
-        if (EigenVector3dToJsonArray(point, point_object) == false) {
+        if (!EigenVector3dToJsonArray(point, point_object)) {
             return false;
         }
         polygon_array.append(point_object);
@@ -55,7 +55,7 @@ bool SelectionPolygonVolume::ConvertToJsonValue(Json::Value &value) const {
 }
 
 bool SelectionPolygonVolume::ConvertFromJsonValue(const Json::Value &value) {
-    if (value.isObject() == false) {
+    if (!value.isObject()) {
         utility::LogWarning(
                 "SelectionPolygonVolume read JSON failed: unsupported json "
                 "format.");
@@ -81,8 +81,7 @@ bool SelectionPolygonVolume::ConvertFromJsonValue(const Json::Value &value) {
     bounding_polygon_.resize(polygon_array.size());
     for (int i = 0; i < (int)polygon_array.size(); i++) {
         const Json::Value &point_object = polygon_array[i];
-        if (EigenVector3dFromJsonArray(bounding_polygon_[i], point_object) ==
-            false) {
+        if (!EigenVector3dFromJsonArray(bounding_polygon_[i], point_object)) {
             return false;
         }
     }

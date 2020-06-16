@@ -36,8 +36,8 @@
 #include <filament/Skybox.h>
 #include <filament/Texture.h>
 #include <filament/TextureSampler.h>
-#include <filament/image/KtxBundle.h>
-#include <filament/image/KtxUtility.h>
+#include <image/KtxBundle.h>
+#include <image/KtxUtility.h>
 
 #include "Open3D/GUI/Application.h"
 #include "Open3D/IO/ClassIO/ImageIO.h"
@@ -253,7 +253,7 @@ MaterialHandle FilamentResourceManager::CreateMaterial(
         const ResourceLoadRequest& request) {
     MaterialHandle handle;
 
-    if (false == request.path_.empty()) {
+    if (!request.path_.empty()) {
         std::vector<char> material_data;
         std::string error_str;
 
@@ -383,7 +383,7 @@ IndirectLightHandle FilamentResourceManager::CreateIndirectLight(
         const ResourceLoadRequest& request) {
     IndirectLightHandle handle;
 
-    if (false == request.path_.empty()) {
+    if (!request.path_.empty()) {
         std::vector<char> ibl_data;
         std::string error_str;
 
@@ -438,7 +438,7 @@ SkyboxHandle FilamentResourceManager::CreateSkybox(
         const ResourceLoadRequest& request) {
     SkyboxHandle handle;
 
-    if (false == request.path_.empty()) {
+    if (!request.path_.empty()) {
         std::vector<char> sky_data;
         std::string error_str;
 

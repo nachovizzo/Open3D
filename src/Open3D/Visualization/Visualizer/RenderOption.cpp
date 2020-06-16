@@ -41,56 +41,52 @@ bool RenderOption::ConvertToJsonValue(Json::Value &value) const {
     value["version_major"] = 1;
     value["version_minor"] = 0;
 
-    if (EigenVector3dToJsonArray(background_color_,
-                                 value["background_color"]) == false) {
+    if (!EigenVector3dToJsonArray(background_color_,
+                                  value["background_color"])) {
         return false;
     }
     value["interpolation_option"] = (int)interpolation_option_;
 
     value["light_on"] = light_on_;
-    if (EigenVector3dToJsonArray(light_ambient_color_,
-                                 value["light_ambient_color"]) == false) {
+    if (!EigenVector3dToJsonArray(light_ambient_color_,
+                                  value["light_ambient_color"])) {
         return false;
     }
-    if (EigenVector3dToJsonArray(light_position_relative_[0],
-                                 value["light0_position"]) == false) {
+    if (!EigenVector3dToJsonArray(light_position_relative_[0],
+                                  value["light0_position"])) {
         return false;
     }
-    if (EigenVector3dToJsonArray(light_color_[0], value["light0_color"]) ==
-        false) {
+    if (!EigenVector3dToJsonArray(light_color_[0], value["light0_color"])) {
         return false;
     }
     value["light0_diffuse_power"] = light_diffuse_power_[0];
     value["light0_specular_power"] = light_specular_power_[0];
     value["light0_specular_shininess"] = light_specular_shininess_[0];
-    if (EigenVector3dToJsonArray(light_position_relative_[1],
-                                 value["light1_position"]) == false) {
+    if (!EigenVector3dToJsonArray(light_position_relative_[1],
+                                  value["light1_position"])) {
         return false;
     }
-    if (EigenVector3dToJsonArray(light_color_[1], value["light1_color"]) ==
-        false) {
+    if (!EigenVector3dToJsonArray(light_color_[1], value["light1_color"])) {
         return false;
     }
     value["light1_diffuse_power"] = light_diffuse_power_[1];
     value["light1_specular_power"] = light_specular_power_[1];
     value["light1_specular_shininess"] = light_specular_shininess_[1];
-    if (EigenVector3dToJsonArray(light_position_relative_[2],
-                                 value["light2_position"]) == false) {
+    if (!EigenVector3dToJsonArray(light_position_relative_[2],
+                                  value["light2_position"])) {
         return false;
     }
-    if (EigenVector3dToJsonArray(light_color_[2], value["light2_color"]) ==
-        false) {
+    if (!EigenVector3dToJsonArray(light_color_[2], value["light2_color"])) {
         return false;
     }
     value["light2_diffuse_power"] = light_diffuse_power_[2];
     value["light2_specular_power"] = light_specular_power_[2];
     value["light2_specular_shininess"] = light_specular_shininess_[2];
-    if (EigenVector3dToJsonArray(light_position_relative_[3],
-                                 value["light3_position"]) == false) {
+    if (!EigenVector3dToJsonArray(light_position_relative_[3],
+                                  value["light3_position"])) {
         return false;
     }
-    if (EigenVector3dToJsonArray(light_color_[3], value["light3_color"]) ==
-        false) {
+    if (!EigenVector3dToJsonArray(light_color_[3], value["light3_color"])) {
         return false;
     }
     value["light3_diffuse_power"] = light_diffuse_power_[3];
@@ -105,8 +101,8 @@ bool RenderOption::ConvertToJsonValue(Json::Value &value) const {
     value["mesh_color_option"] = (int)mesh_color_option_;
     value["mesh_show_back_face"] = mesh_show_back_face_;
     value["mesh_show_wireframe"] = mesh_show_wireframe_;
-    if (EigenVector3dToJsonArray(default_mesh_color_,
-                                 value["default_mesh_color"]) == false) {
+    if (!EigenVector3dToJsonArray(default_mesh_color_,
+                                  value["default_mesh_color"])) {
         return false;
     }
 
@@ -120,7 +116,7 @@ bool RenderOption::ConvertToJsonValue(Json::Value &value) const {
 }
 
 bool RenderOption::ConvertFromJsonValue(const Json::Value &value) {
-    if (value.isObject() == false) {
+    if (!value.isObject()) {
         utility::LogWarning(
                 "ViewTrajectory read JSON failed: unsupported json format.");
         return false;
@@ -133,8 +129,8 @@ bool RenderOption::ConvertFromJsonValue(const Json::Value &value) {
         return false;
     }
 
-    if (EigenVector3dFromJsonArray(background_color_,
-                                   value["background_color"]) == false) {
+    if (!EigenVector3dFromJsonArray(background_color_,
+                                    value["background_color"])) {
         return false;
     }
     interpolation_option_ =
@@ -143,16 +139,15 @@ bool RenderOption::ConvertFromJsonValue(const Json::Value &value) {
                     .asInt();
 
     light_on_ = value.get("light_on", light_on_).asBool();
-    if (EigenVector3dFromJsonArray(light_ambient_color_,
-                                   value["light_ambient_color"]) == false) {
+    if (!EigenVector3dFromJsonArray(light_ambient_color_,
+                                    value["light_ambient_color"])) {
         return false;
     }
-    if (EigenVector3dFromJsonArray(light_position_relative_[0],
-                                   value["light0_position"]) == false) {
+    if (!EigenVector3dFromJsonArray(light_position_relative_[0],
+                                    value["light0_position"])) {
         return false;
     }
-    if (EigenVector3dFromJsonArray(light_color_[0], value["light0_color"]) ==
-        false) {
+    if (!EigenVector3dFromJsonArray(light_color_[0], value["light0_color"])) {
         return false;
     }
     light_diffuse_power_[0] =
@@ -164,12 +159,11 @@ bool RenderOption::ConvertFromJsonValue(const Json::Value &value) {
     light_specular_shininess_[0] =
             value.get("light0_specular_shininess", light_specular_shininess_[0])
                     .asDouble();
-    if (EigenVector3dFromJsonArray(light_position_relative_[1],
-                                   value["light1_position"]) == false) {
+    if (!EigenVector3dFromJsonArray(light_position_relative_[1],
+                                    value["light1_position"])) {
         return false;
     }
-    if (EigenVector3dFromJsonArray(light_color_[1], value["light1_color"]) ==
-        false) {
+    if (!EigenVector3dFromJsonArray(light_color_[1], value["light1_color"])) {
         return false;
     }
     light_diffuse_power_[1] =
@@ -181,12 +175,11 @@ bool RenderOption::ConvertFromJsonValue(const Json::Value &value) {
     light_specular_shininess_[1] =
             value.get("light1_specular_shininess", light_specular_shininess_[1])
                     .asDouble();
-    if (EigenVector3dFromJsonArray(light_position_relative_[2],
-                                   value["light2_position"]) == false) {
+    if (!EigenVector3dFromJsonArray(light_position_relative_[2],
+                                    value["light2_position"])) {
         return false;
     }
-    if (EigenVector3dFromJsonArray(light_color_[2], value["light2_color"]) ==
-        false) {
+    if (!EigenVector3dFromJsonArray(light_color_[2], value["light2_color"])) {
         return false;
     }
     light_diffuse_power_[2] =
@@ -198,12 +191,11 @@ bool RenderOption::ConvertFromJsonValue(const Json::Value &value) {
     light_specular_shininess_[2] =
             value.get("light2_specular_shininess", light_specular_shininess_[2])
                     .asDouble();
-    if (EigenVector3dFromJsonArray(light_position_relative_[3],
-                                   value["light3_position"]) == false) {
+    if (!EigenVector3dFromJsonArray(light_position_relative_[3],
+                                    value["light3_position"])) {
         return false;
     }
-    if (EigenVector3dFromJsonArray(light_color_[3], value["light3_color"]) ==
-        false) {
+    if (!EigenVector3dFromJsonArray(light_color_[3], value["light3_color"])) {
         return false;
     }
     light_diffuse_power_[3] =
@@ -236,8 +228,8 @@ bool RenderOption::ConvertFromJsonValue(const Json::Value &value) {
             value.get("mesh_show_back_face", mesh_show_back_face_).asBool();
     mesh_show_wireframe_ =
             value.get("mesh_show_wireframe", mesh_show_wireframe_).asBool();
-    if (EigenVector3dFromJsonArray(default_mesh_color_,
-                                   value["default_mesh_color"]) == false) {
+    if (!EigenVector3dFromJsonArray(default_mesh_color_,
+                                    value["default_mesh_color"])) {
         return false;
     }
 

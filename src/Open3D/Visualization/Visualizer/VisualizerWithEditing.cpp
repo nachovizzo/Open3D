@@ -49,7 +49,7 @@ namespace visualization {
 bool VisualizerWithEditing::AddGeometry(
         std::shared_ptr<const geometry::Geometry> geometry_ptr,
         bool reset_bounding_box) {
-    if (is_initialized_ == false || geometry_ptrs_.empty() == false) {
+    if (!is_initialized_ || !geometry_ptrs_.empty()) {
         return false;
     }
     glfwMakeContextCurrent(window_);
@@ -64,8 +64,8 @@ bool VisualizerWithEditing::AddGeometry(
         editing_geometry_ptr_ = ptr;
         editing_geometry_renderer_ptr_ =
                 std::make_shared<glsl::PointCloudRenderer>();
-        if (editing_geometry_renderer_ptr_->AddGeometry(
-                    editing_geometry_ptr_) == false) {
+        if (!editing_geometry_renderer_ptr_->AddGeometry(
+                    editing_geometry_ptr_)) {
             return false;
         }
     } else if (geometry_ptr->GetGeometryType() ==
@@ -75,8 +75,8 @@ bool VisualizerWithEditing::AddGeometry(
         editing_geometry_ptr_ = ptr;
         editing_geometry_renderer_ptr_ =
                 std::make_shared<glsl::LineSetRenderer>();
-        if (editing_geometry_renderer_ptr_->AddGeometry(
-                    editing_geometry_ptr_) == false) {
+        if (!editing_geometry_renderer_ptr_->AddGeometry(
+                    editing_geometry_ptr_)) {
             return false;
         }
     } else if (geometry_ptr->GetGeometryType() ==
@@ -88,8 +88,8 @@ bool VisualizerWithEditing::AddGeometry(
         editing_geometry_ptr_ = ptr;
         editing_geometry_renderer_ptr_ =
                 std::make_shared<glsl::TriangleMeshRenderer>();
-        if (editing_geometry_renderer_ptr_->AddGeometry(
-                    editing_geometry_ptr_) == false) {
+        if (!editing_geometry_renderer_ptr_->AddGeometry(
+                    editing_geometry_ptr_)) {
             return false;
         }
     } else if (geometry_ptr->GetGeometryType() ==
@@ -99,8 +99,8 @@ bool VisualizerWithEditing::AddGeometry(
         editing_geometry_ptr_ = ptr;
         editing_geometry_renderer_ptr_ =
                 std::make_shared<glsl::ImageRenderer>();
-        if (editing_geometry_renderer_ptr_->AddGeometry(
-                    editing_geometry_ptr_) == false) {
+        if (!editing_geometry_renderer_ptr_->AddGeometry(
+                    editing_geometry_ptr_)) {
             return false;
         }
     } else {
@@ -161,8 +161,7 @@ void VisualizerWithEditing::BuildUtilities() {
     selection_polygon_ptr_ = std::make_shared<SelectionPolygon>();
     selection_polygon_renderer_ptr_ =
             std::make_shared<glsl::SelectionPolygonRenderer>();
-    if (selection_polygon_renderer_ptr_->AddGeometry(selection_polygon_ptr_) ==
-        false) {
+    if (!selection_polygon_renderer_ptr_->AddGeometry(selection_polygon_ptr_)) {
         success = false;
     }
     if (success) {
@@ -174,13 +173,12 @@ void VisualizerWithEditing::BuildUtilities() {
     success = true;
     pointcloud_picker_ptr_ = std::make_shared<PointCloudPicker>();
     if (geometry_ptrs_.empty() ||
-        pointcloud_picker_ptr_->SetPointCloud(editing_geometry_ptr_) == false) {
+        !pointcloud_picker_ptr_->SetPointCloud(editing_geometry_ptr_)) {
         success = false;
     }
     pointcloud_picker_renderer_ptr_ =
             std::make_shared<glsl::PointCloudPickerRenderer>();
-    if (pointcloud_picker_renderer_ptr_->AddGeometry(pointcloud_picker_ptr_) ==
-        false) {
+    if (!pointcloud_picker_renderer_ptr_->AddGeometry(pointcloud_picker_ptr_)) {
         success = false;
     }
     if (success) {
@@ -191,7 +189,7 @@ void VisualizerWithEditing::BuildUtilities() {
 
 int VisualizerWithEditing::PickPoint(double x, double y) {
     auto renderer_ptr = std::make_shared<glsl::PointCloudPickingRenderer>();
-    if (renderer_ptr->AddGeometry(editing_geometry_ptr_) == false) {
+    if (!renderer_ptr->AddGeometry(editing_geometry_ptr_)) {
         return -1;
     }
     const auto &view = GetViewControl();
@@ -622,7 +620,7 @@ void VisualizerWithEditing::MouseButtonCallback(GLFWwindow *window,
             }
         } else if (button == GLFW_MOUSE_BUTTON_RIGHT &&
                    action == GLFW_RELEASE && (mods & GLFW_MOD_SHIFT)) {
-            if (pointcloud_picker_ptr_->picked_indices_.empty() == false) {
+            if (!pointcloud_picker_ptr_->picked_indices_.empty()) {
                 utility::LogInfo(
                         "Remove picked point #{} from pick queue.",
                         pointcloud_picker_ptr_->picked_indices_.back());

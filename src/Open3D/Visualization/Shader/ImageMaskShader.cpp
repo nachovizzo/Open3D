@@ -38,8 +38,7 @@ namespace visualization {
 namespace glsl {
 
 bool ImageMaskShader::Compile() {
-    if (CompileShaders(ImageMaskVertexShader, NULL, ImageMaskFragmentShader) ==
-        false) {
+    if (!CompileShaders(ImageMaskVertexShader, NULL, ImageMaskFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -69,7 +68,7 @@ bool ImageMaskShader::BindGeometry(const geometry::Geometry &geometry,
 
     // Prepare data to be passed to GPU
     geometry::Image render_image;
-    if (PrepareBinding(geometry, option, view, render_image) == false) {
+    if (!PrepareBinding(geometry, option, view, render_image)) {
         PrintShaderWarning("Binding failed when preparing data.");
         return false;
     }
@@ -116,7 +115,7 @@ bool ImageMaskShader::BindGeometry(const geometry::Geometry &geometry,
 bool ImageMaskShader::RenderGeometry(const geometry::Geometry &geometry,
                                      const RenderOption &option,
                                      const ViewControl &view) {
-    if (PrepareRendering(geometry, option, view) == false) {
+    if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
@@ -181,7 +180,7 @@ bool ImageMaskShaderForImage::PrepareBinding(const geometry::Geometry &geometry,
         return false;
     }
     const geometry::Image &image = (const geometry::Image &)geometry;
-    if (image.HasData() == false) {
+    if (!image.HasData()) {
         PrintShaderWarning("Binding failed with empty image.");
         return false;
     }

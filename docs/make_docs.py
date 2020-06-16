@@ -33,7 +33,6 @@ from __future__ import print_function
 import argparse
 import subprocess
 import sys
-import multiprocessing
 import importlib
 import os
 from inspect import getmembers, isbuiltin, isclass, ismodule
@@ -223,7 +222,7 @@ class SphinxDocsBuilder:
         # We use the modules listed in the index.rst file here.
         self.documented_modules = self._get_module_names_from_index_rst()
 
-        # self.documented_modules = "open3d.open3d_pybind"  # Points to the open3d.so
+        # self.documented_modules = "open3d.pybind"  # Points to the open3d.so
         # self.c_module_relative = "open3d"  # The relative module reference to open3d.so
         self.python_api_output_dir = "python_api"
         self.html_output_dir = html_output_dir
@@ -277,8 +276,6 @@ class SphinxDocsBuilder:
                 "version=" + release_version,
                 "-D",
                 "release=" + release_version,
-                "-j",
-                str(multiprocessing.cpu_count()),
                 ".",
                 build_dir,
             ]
@@ -287,8 +284,6 @@ class SphinxDocsBuilder:
                 "sphinx-build",
                 "-b",
                 "html",
-                "-j",
-                str(multiprocessing.cpu_count()),
                 ".",
                 build_dir,
             ]

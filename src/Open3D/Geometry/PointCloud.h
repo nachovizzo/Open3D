@@ -110,7 +110,7 @@ public:
         return *this;
     }
 
-    /// \brief Remove all points fromt he point cloud that have a nan entry, or
+    /// \brief Remove all points from the point cloud that have a nan entry, or
     /// infinite entries.
     ///
     /// Also removes the corresponding normals and color entries.
@@ -269,7 +269,7 @@ public:
     /// Noisy Point Cloud Data', 2010.
     ///
     /// \param camera_location All points not visible from that location will be
-    /// removed. \param radius The radius of the sperical projection.
+    /// removed. \param radius The radius of the spherical projection.
     std::tuple<std::shared_ptr<TriangleMesh>, std::vector<size_t>>
     HiddenPointRemoval(const Eigen::Vector3d &camera_location,
                        const double radius) const;

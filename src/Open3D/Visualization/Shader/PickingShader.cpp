@@ -37,8 +37,7 @@ namespace visualization {
 namespace glsl {
 
 bool PickingShader::Compile() {
-    if (CompileShaders(PickingVertexShader, NULL, PickingFragmentShader) ==
-        false) {
+    if (!CompileShaders(PickingVertexShader, NULL, PickingFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -67,7 +66,7 @@ bool PickingShader::BindGeometry(const geometry::Geometry &geometry,
     // Prepare data to be passed to GPU
     std::vector<Eigen::Vector3f> points;
     std::vector<float> indices;
-    if (PrepareBinding(geometry, option, view, points, indices) == false) {
+    if (!PrepareBinding(geometry, option, view, points, indices)) {
         PrintShaderWarning("Binding failed when preparing data.");
         return false;
     }
@@ -89,7 +88,7 @@ bool PickingShader::BindGeometry(const geometry::Geometry &geometry,
 bool PickingShader::RenderGeometry(const geometry::Geometry &geometry,
                                    const RenderOption &option,
                                    const ViewControl &view) {
-    if (PrepareRendering(geometry, option, view) == false) {
+    if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
@@ -143,7 +142,7 @@ bool PickingShaderForPointCloud::PrepareBinding(
     }
     const geometry::PointCloud &pointcloud =
             (const geometry::PointCloud &)geometry;
-    if (pointcloud.HasPoints() == false) {
+    if (!pointcloud.HasPoints()) {
         PrintShaderWarning("Binding failed with empty pointcloud.");
         return false;
     }

@@ -27,7 +27,7 @@
 #include "Open3D/IO/ClassIO/VoxelGridIO.h"
 #include "Open3D/Geometry/VoxelGrid.h"
 #include "Open3D/Visualization/Utility/DrawGeometry.h"
-#include "TestUtility/UnitTest.h"
+#include "UnitTest/UnitTest.h"
 
 namespace open3d {
 namespace unit_test {
@@ -60,11 +60,10 @@ TEST(VoxelGridIO, PLYWriteRead) {
         const auto &src_i = src_voxel.grid_index_;
         const auto &src_c = src_voxel.color_;
         ExpectEQ(src_i, dst_voxel_grid->voxels_[src_i].grid_index_);
-        ExpectEQ(
-                Eigen::Vector3d((src_c * 255.0).cast<uint8_t>().cast<double>()),
-                Eigen::Vector3d((dst_voxel_grid->voxels_[src_i].color_ * 255.0)
-                                        .cast<uint8_t>()
-                                        .cast<double>()));
+        auto src_rgb = utility::ColorToUint8(src_c);
+        auto dst_rgb =
+                utility::ColorToUint8(dst_voxel_grid->voxels_[src_i].color_);
+        ExpectEQ(src_rgb, dst_rgb);
     }
 
     // Uncomment the line below for visualization test
