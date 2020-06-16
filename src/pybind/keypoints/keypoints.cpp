@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "open3d_pybind/keypoints/keypoints.h"
+#include "pybind/keypoints/keypoints.h"
 
 namespace open3d {
 void pybind_keypoints(py::module &m) {

@@ -26,8 +26,8 @@
 // ----------------------------------------------------------------------------
 
 #include "Open3D/Keypoints/ISSDetector.h"
-#include "open3d_pybind/docstring.h"
-#include "open3d_pybind/keypoints/keypoints.h"
+#include "pybind/docstring.h"
+#include "pybind/keypoints/keypoints.h"
 
 namespace open3d {
 
