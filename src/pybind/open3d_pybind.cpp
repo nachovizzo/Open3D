@@ -33,7 +33,7 @@
 #include "pybind/io/io.h"
 #include "pybind/odometry/odometry.h"
 #include "pybind/registration/registration.h"
-#include "open3d_pybind/keypoints/keypoints.h"
+#include "pybind/keypoints/keypoints.h"
 #include "pybind/utility/utility.h"
 #include "pybind/visualization/visualization.h"
 
