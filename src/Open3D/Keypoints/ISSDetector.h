@@ -24,9 +24,12 @@ public:
     /// invoked, the KDTree will be used later on to compute the keypoints.
     ///
     /// \param cloud Input point cloud, agnostic to normal information.
-    /// \param salient_radius The radius of the spherical neighborhood used to
-    /// detect the keypoints \param non_max_radius The non maxima supression
-    /// radius
+    /// \param salient_radius The radius of the spherical
+    /// neighborhood used to detect the keypoints \param non_max_radius
+    /// The non maxima supression radius.
+    /// If non of the input parameters are specified or are 0.0, then they will
+    /// be computed from the input data, taking into account the Model
+    /// Resolution.
     explicit ISSDetector(const std::shared_ptr<geometry::PointCloud>& cloud,
                          double salient_radius = 0.0,
                          double non_max_radius = 0.0)
@@ -81,7 +84,10 @@ public:
 /// \param input The input point cloud, agnostic to normal information.
 /// \param salient_radius The radius of the spherical neighborhood used to
 /// detect the keypoints \param non_max_radius The non maxima supression
-/// radius
+/// radius.
+/// If non of the input parameters are specified or are 0.0, then they will
+/// be computed from the input data, taking into account the Model
+/// Resolution.
 std::shared_ptr<geometry::PointCloud> ComputeISSKeypoints(
         const std::shared_ptr<geometry::PointCloud>& input,
         double salient_radius = 0.0,

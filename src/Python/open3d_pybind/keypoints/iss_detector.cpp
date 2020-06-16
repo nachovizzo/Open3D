@@ -33,8 +33,11 @@ namespace open3d {
 
 void pybind_compute_iss_keypoints(py::module &m) {
     m.def("compute_iss_keypoints", &keypoints::ComputeISSKeypoints,
-          "Function to compute ISS keypoints for a point cloud", "input"_a,
-          "salient_radius"_a = 0.0, "non_max_radius"_a = 0.0);
+          "Function to compute ISS keypoints for a point cloud If non of the "
+          "input parameters are specified or are 0.0, then they will be "
+          "computed from the input data, taking into account the Model "
+          "Resolution.",
+          "input"_a, "salient_radius"_a = 0.0, "non_max_radius"_a = 0.0);
     docstring::FunctionDocInject(
             m, "compute_iss_keypoints",
             {{"input", "The Input point cloud."},
@@ -54,7 +57,10 @@ void pybind_iss_detector(py::module &m) {
             "PCL implementation.");
     detector.def(py::init<const std::shared_ptr<geometry::PointCloud> &, double,
                           double>(),
-                 "Create a ISS Keypoint Detector from an input cloud",
+                 "Create a ISS Keypoint Detector from an input cloud. If non "
+                 "of the input parameters are specified or are 0.0, then they "
+                 "will be computed from the input data, taking into account "
+                 "the Model Resolution.",
                  "cloud"_a, "salient_radius"_a = 0.0, "non_max_radius"_a = 0.0)
             .def("compute_keypoints", &keypoints::ISSDetector::ComputeKeypoints,
                  "Compute the ISS Keypoints on the input point cloud")
