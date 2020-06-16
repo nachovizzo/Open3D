@@ -18,7 +18,7 @@ def compute_iss_and_visualize(mesh):
     sampled_cloud.points = mesh.vertices
 
     tic = time.time()
-    keypoints = o3d.keypoints.compute_iss_keypoints(sampled_cloud, 0, 0)
+    keypoints = o3d.keypoints.compute_iss_keypoints(sampled_cloud)
     print("ISS Computation took {:.0f} [ms]".format(1000 * (time.time() - tic)))
 
     mesh.compute_triangle_normals()
