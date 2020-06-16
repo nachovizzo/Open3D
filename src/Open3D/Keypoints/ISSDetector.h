@@ -40,13 +40,13 @@ protected:
     /// Compute the model resolution;
     double ComputeModelResolution() const;
 
-public:
     /// Input PointCloud where to extract the keypoints
     std::shared_ptr<geometry::PointCloud> cloud_;
 
     /// KDTree to accelerate nearest neighbour searches
     geometry::KDTreeFlann kdtree_;
 
+public:
     /// The radius of the spherical neighborhood used to compute the scatter
     /// matrix
     double salient_radius_ = 0.0;
