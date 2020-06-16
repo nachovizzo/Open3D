@@ -44,7 +44,7 @@ void pybind_compute_iss_keypoints(py::module &m) {
              {"salient_radius",
               "The radius of the spherical neighborhood used to detect "
               "keypoints."},
-             {"non_max_radio", "The non maxima supression radius"}});
+             {"non_max_radius", "The non maxima supression radius"}});
 }
 
 void pybind_iss_detector(py::module &m) {
