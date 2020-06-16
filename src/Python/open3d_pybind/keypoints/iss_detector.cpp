@@ -31,7 +31,7 @@
 
 namespace open3d {
 
-void pybind_iss_detector(py::module &m) {
+void pybind_compute_iss_keypoints(py::module &m) {
     m.def("compute_iss_keypoints", &keypoints::ComputeISSKeypoints,
           "Function to compute ISS keypoints for a point cloud", "input"_a,
           "salient_radius"_a = 0.0, "non_max_radius"_a = 0.0);
@@ -40,6 +40,35 @@ void pybind_iss_detector(py::module &m) {
             {{"input", "The Input point cloud."},
              {"salient_radius", "The radius where to search neighbour"},
              {"non_max_radiop", "The non maxima supression radius"}});
+}
+
+void pybind_iss_detector(py::module &m) {
+    py::class_<keypoints::ISSDetector> detector(m, "ISSDetector",
+                                                "ISS Keypoint Detector.");
+    detector.def(py::init<const std::shared_ptr<geometry::PointCloud> &, double,
+                          double>(),
+                 "Create a ISS Keypoint Detector from an input cloud",
+                 "cloud"_a, "salient_radius"_a = 0.0, "non_max_radius"_a = 0.0)
+            .def("compute_keypoints", &keypoints::ISSDetector::ComputeKeypoints,
+                 "Function to compute ISS Keypoints for a point cloud")
+            .def_readwrite("salient_radius",
+                           &keypoints::ISSDetector::salient_radius_,
+                           "The radius of the spherical neighborhood")
+            .def_readwrite("non_max_radius",
+                           &keypoints::ISSDetector::non_max_radius_,
+                           "The non maxima supression radius")
+            .def_readwrite("gamma_21", &keypoints::ISSDetector::gamma_21_,
+                           "The upper bound on the ratio between the second "
+                           "and the first eigenvalue returned by the EVD")
+            .def_readwrite("gamma_32", &keypoints::ISSDetector::gamma_32_,
+                           "The upper bound on the ratio between the third "
+                           "and the second eigenvalue returned by the EVD")
+            .def_readwrite(
+                    "min_neighbors", &keypoints::ISSDetector::min_neighbors_,
+                    "Minimum number of neighbors that has to be found while "
+                    "applying the non maxima suppression algorithm.");
+
+    docstring::ClassMethodDocInject(m, "ISSDetector", "compute_keypoints");
 }
 
 }  // namespace open3d

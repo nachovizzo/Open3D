@@ -29,6 +29,7 @@
 namespace open3d {
 void pybind_keypoints(py::module &m) {
     py::module m_submodule = m.def_submodule("keypoints");
+    pybind_compute_iss_keypoints(m_submodule);
     pybind_iss_detector(m_submodule);
 }
 }  // namespace open3d
