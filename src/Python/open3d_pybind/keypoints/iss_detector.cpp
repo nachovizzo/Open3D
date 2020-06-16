@@ -62,6 +62,17 @@ void pybind_iss_detector(py::module &m) {
                  "will be computed from the input data, taking into account "
                  "the Model Resolution.",
                  "cloud"_a, "salient_radius"_a = 0.0, "non_max_radius"_a = 0.0)
+            .def("__repr__",
+                 [](const keypoints::ISSDetector &detector) {
+                     std::ostringstream repr;
+                     repr << "keypoints::ISSDetector with "
+                          << "salient_radius = " << detector.salient_radius_
+                          << ", non_max_radius = " << detector.non_max_radius_
+                          << ", gamma_21 = " << detector.gamma_21_
+                          << ", gamma_32 = " << detector.gamma_32_
+                          << ", min_neighbors = " << detector.min_neighbors_;
+                     return repr.str();
+                 })
             .def("compute_keypoints", &keypoints::ISSDetector::ComputeKeypoints,
                  "Compute the ISS Keypoints on the input point cloud")
             .def_readwrite("salient_radius",
