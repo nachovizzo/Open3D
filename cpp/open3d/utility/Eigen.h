@@ -128,5 +128,8 @@ Eigen::Vector3uint8 ColorToUint8(const Eigen::Vector3d &color);
 Eigen::Vector3d ColorToDouble(uint8_t r, uint8_t g, uint8_t b);
 Eigen::Vector3d ColorToDouble(const Eigen::Vector3uint8 &rgb);
 
+/// Genretate a skew-symmetric matrix from a vector 3d vector.
+Eigen::Matrix3d SkewSymmetricMatrix(const Eigen::Vector3d &vec);
+
 }  // namespace utility
 }  // namespace open3d

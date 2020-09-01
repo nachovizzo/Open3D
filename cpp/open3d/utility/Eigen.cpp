@@ -316,5 +316,14 @@ Eigen::Vector3d ColorToDouble(const Eigen::Vector3uint8 &rgb) {
     return ColorToDouble(rgb(0), rgb(1), rgb(2));
 }
 
+Eigen::Matrix3d SkewSymmetricMatrix(const Eigen::Vector3d &vec) {
+    Eigen::Matrix3d skew_matrix;
+    // clang-format off
+    skew_matrix << 0,      -vec.z(),  vec.y(),
+                   vec.z(), 0,       -vec.x(),
+                  -vec.y(), vec.x(),  0;
+    // clang-format on
+    return skew_matrix;
+}
 }  // namespace utility
 }  // namespace open3d

@@ -406,7 +406,10 @@ void pybind_trianglemesh(py::module &m) {
                         "axis will be "
                         "rendered as red, green, and blue arrows respectively.",
                         "size"_a = 1.0,
-                        "origin"_a = Eigen::Vector3d(0.0, 0.0, 0.0))
+                        "origin"_a = Eigen::Vector3d(0.0, 0.0, 0.0),
+                        "v1"_a = Eigen::Vector3d(1.0, 0.0, 0.0),
+                        "v2"_a = Eigen::Vector3d(0.0, 1.0, 0.0),
+                        "v3"_a = Eigen::Vector3d(0.0, 0.0, 1.0))
             .def_static("create_moebius", &TriangleMesh::CreateMoebius,
                         "Factory function to create a Moebius strip.",
                         "length_split"_a = 70, "width_split"_a = 15,
@@ -753,7 +756,10 @@ void pybind_trianglemesh(py::module &m) {
     docstring::ClassMethodDocInject(
             m, "TriangleMesh", "create_coordinate_frame",
             {{"size", "The size of the coordinate frame."},
-             {"origin", "The origin of the cooridnate frame."}});
+             {"origin", "The origin of the cooridnate frame."},
+             {"v1", "Defines the direction of the x-axis"},
+             {"v2", "Defines the direction of the y-axis"},
+             {"v3", "Defines the direction of the z-axis"}});
     docstring::ClassMethodDocInject(
             m, "TriangleMesh", "create_moebius",
             {{"length_split",

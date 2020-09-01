@@ -26,9 +26,44 @@
 
 #include "open3d/geometry/TriangleMesh.h"
 #include "open3d/utility/Console.h"
+#include "open3d/utility/Eigen.h"
 
 namespace open3d {
 namespace geometry {
+
+namespace {
+
+/// Utility function to obtain the rotation matrix to rotate an axis to match
+/// the orienation of the input vector v
+Eigen::Matrix3d GetRotationMatrixFromVector(const Eigen::Vector3d &v) {
+    if (v.isZero()) {
+        utility::LogError("[GetRotationMatrixFromVector] Got empty vector");
+    }
+
+    Eigen::Vector3d v_unit = v / v.norm();
+    Eigen::Vector3d z_axis{0.0, 0.0, 1.0};
+    Eigen::Matrix3d z_skew = utility::SkewSymmetricMatrix(z_axis);
+    Eigen::Matrix3d v_skew = utility::SkewSymmetricMatrix(z_skew * v_unit);
+    Eigen::Matrix3d R = Eigen::Matrix3d::Identity();
+    R += (v_skew + v_skew * v_skew) / (1.0 + z_axis.dot(v_unit));
+    return R;
+}
+
+/// Obtain an arrow that it is aligned with the given inptu vector v;
+std::shared_ptr<TriangleMesh> GetVectorAlignedArrow(double size,
+                                                    const Eigen::Vector3d &v) {
+    if (v.isZero()) {
+        utility::LogError("[GetVectorAlignedArrow] Got empty vector");
+    }
+    double len = size * v.norm();
+    auto mesh_arrow = TriangleMesh::CreateArrow(0.035 * len, 0.06 * len,
+                                                0.8 * len, 0.2 * len);
+    mesh_arrow->ComputeVertexNormals();
+    Eigen::Matrix3d rotation_matrix = GetRotationMatrixFromVector(v);
+    mesh_arrow->Rotate(rotation_matrix, {0.0, 0.0, 0.0});
+    return mesh_arrow;
+}
+}  // namespace
 
 std::shared_ptr<TriangleMesh> TriangleMesh::CreateTetrahedron(
         double radius /* = 1.0*/) {
@@ -400,8 +435,11 @@ std::shared_ptr<TriangleMesh> TriangleMesh::CreateArrow(
 }
 
 std::shared_ptr<TriangleMesh> TriangleMesh::CreateCoordinateFrame(
-        double size /* = 1.0*/,
-        const Eigen::Vector3d &origin /* = Eigen::Vector3d(0.0, 0.0, 0.0)*/) {
+        double size /* = 1.0 */,
+        const Eigen::Vector3d &origin /* = Eigen::Vector3d(0.0, 0.0, 0.0)*/,
+        const Eigen::Vector3d &v1 /* = Eigen::Vector3d(1.0, 0.0, 0.0)*/,
+        const Eigen::Vector3d &v2 /* = Eigen::Vector3d(0.0, 1.0, 0.0)*/,
+        const Eigen::Vector3d &v3 /* = Eigen::Vector3d(0.0, 0.0, 1.0)*/) {
     if (size <= 0) {
         utility::LogError("[CreateCoordinateFrame] size <= 0");
     }
@@ -409,32 +447,17 @@ std::shared_ptr<TriangleMesh> TriangleMesh::CreateCoordinateFrame(
     mesh_frame->ComputeVertexNormals();
     mesh_frame->PaintUniformColor(Eigen::Vector3d(0.5, 0.5, 0.5));
 
-    std::shared_ptr<TriangleMesh> mesh_arrow;
-    Eigen::Matrix4d transformation;
+    // Obatin the XYZ(RGB) axis aligned with the basis vectors
+    auto x_axis = GetVectorAlignedArrow(size, v1);
+    auto y_axis = GetVectorAlignedArrow(size, v2);
+    auto z_axis = GetVectorAlignedArrow(size, v3);
 
-    mesh_arrow = CreateArrow(0.035 * size, 0.06 * size, 0.8 * size, 0.2 * size);
-    mesh_arrow->ComputeVertexNormals();
-    mesh_arrow->PaintUniformColor(Eigen::Vector3d(1.0, 0.0, 0.0));
-    transformation << 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1;
-    mesh_arrow->Transform(transformation);
-    *mesh_frame += *mesh_arrow;
+    x_axis->PaintUniformColor(Eigen::Vector3d(1.0, 0.0, 0.0));
+    y_axis->PaintUniformColor(Eigen::Vector3d(0.0, 1.0, 0.0));
+    z_axis->PaintUniformColor(Eigen::Vector3d(0.0, 0.0, 1.0));
 
-    mesh_arrow = CreateArrow(0.035 * size, 0.06 * size, 0.8 * size, 0.2 * size);
-    mesh_arrow->ComputeVertexNormals();
-    mesh_arrow->PaintUniformColor(Eigen::Vector3d(0.0, 1.0, 0.0));
-    transformation << 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1;
-    mesh_arrow->Transform(transformation);
-    *mesh_frame += *mesh_arrow;
-
-    mesh_arrow = CreateArrow(0.035 * size, 0.06 * size, 0.8 * size, 0.2 * size);
-    mesh_arrow->ComputeVertexNormals();
-    mesh_arrow->PaintUniformColor(Eigen::Vector3d(0.0, 0.0, 1.0));
-    transformation << 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1;
-    mesh_arrow->Transform(transformation);
-    *mesh_frame += *mesh_arrow;
-
+    *mesh_frame += *x_axis + *y_axis + *z_axis;
     mesh_frame->Translate(origin, true);
-
     return mesh_frame;
 }
 

@@ -681,14 +681,19 @@ public:
             int cylinder_split = 4,
             int cone_split = 1);
 
-    /// Factory function to create a coordinate frame mesh
-    /// (TriangleMeshFactory.cpp).
-    /// arrows respectively. \param size is the length of the axes.
+    /// Factory function to create a coordinate frame mesh from 3 basis vectors
+    /// \param size is the length of the axes.
     /// \param size defines the size of the coordinate frame.
     /// \param origin defines the origin of the coordinate frame.
+    /// \param v1 defines the direction of the x-axis.
+    /// \param v2 defines the direction of the y-axis.
+    /// \param v3 defines the direction of the z-axis.
     static std::shared_ptr<TriangleMesh> CreateCoordinateFrame(
             double size = 1.0,
-            const Eigen::Vector3d &origin = Eigen::Vector3d(0.0, 0.0, 0.0));
+            const Eigen::Vector3d &origin = Eigen::Vector3d(0.0, 0.0, 0.0),
+            const Eigen::Vector3d &v1 = Eigen::Vector3d(1.0, 0.0, 0.0),
+            const Eigen::Vector3d &v2 = Eigen::Vector3d(0.0, 1.0, 0.0),
+            const Eigen::Vector3d &v3 = Eigen::Vector3d(0.0, 0.0, 1.0));
 
     /// Factory function to create a Moebius strip.
     /// \param length_split defines the number of segments along the Moebius
