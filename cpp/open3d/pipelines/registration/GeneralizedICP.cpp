@@ -31,10 +31,13 @@
 #include "open3d/pipelines/registration/GeneralizedICP.h"
 
 #include <Eigen/Dense>
+#include <iostream>
 #include <unsupported/Eigen/MatrixFunctions>
 
+#include "open3d/geometry/KDTreeFlann.h"
 #include "open3d/geometry/KDTreeSearchParam.h"
 #include "open3d/geometry/PointCloud.h"
+#include "open3d/pipelines/registration/Registration.h"
 #include "open3d/utility/Console.h"
 #include "open3d/utility/Eigen.h"
 
@@ -97,13 +100,14 @@ double TransformationEstimationForGeneralizedICP::ComputeRMSE(
     }
     double err = 0.0;
     // Compute covariances
-    const auto &source_c = *InitializePointCloudForGeneralizedICP(source);
-    const auto &target_c = *InitializePointCloudForGeneralizedICP(target);
+    auto source_c = InitializePointCloudForGeneralizedICP(source);
+    auto target_c = InitializePointCloudForGeneralizedICP(target);
+
     for (const auto &c : corres) {
-        const Eigen::Vector3d &vs = source_c.points_[c[0]];
-        const Eigen::Matrix3d &Cs = source_c.covariances_[c[0]];
-        const Eigen::Vector3d &vt = target_c.points_[c[1]];
-        const Eigen::Matrix3d &Ct = target_c.covariances_[c[1]];
+        const Eigen::Vector3d &vs = source_c->points_[c[0]];
+        const Eigen::Matrix3d &Cs = source_c->covariances_[c[0]];
+        const Eigen::Vector3d &vt = target_c->points_[c[1]];
+        const Eigen::Matrix3d &Ct = target_c->covariances_[c[1]];
         const Eigen::Vector3d d = vs - vt;
         const Eigen::Matrix3d M = Ct + Cs;
         const Eigen::Matrix3d W = M.inverse().sqrt();
@@ -121,22 +125,18 @@ TransformationEstimationForGeneralizedICP::ComputeTransformation(
         return Eigen::Matrix4d::Identity();
     }
 
-    /// We need to re-compute the covariances for the source cloud because this
-    /// cloud usually comes from the registration::RegistrationICP where we copy
-    /// the real input source into a new geometry::PointCloud, amd thus, we
-    /// loose the covariance information there. This does not hold true for the
-    /// target.
-    const auto &source_c = *InitializePointCloudForGeneralizedICP(source);
-    const auto &target_c = (const PointCloudWithCovariance &)target;
+    auto source_c = InitializePointCloudForGeneralizedICP(source);
+    auto target_c = InitializePointCloudForGeneralizedICP(target);
 
     auto compute_jacobian_and_residual =
             [&](int i,
                 std::vector<Eigen::Vector6d, utility::Vector6d_allocator> &J_r,
                 std::vector<double> &r, std::vector<double> &w) {
-                const Eigen::Vector3d &vs = source_c.points_[corres[i][0]];
-                const Eigen::Matrix3d &Cs = source_c.covariances_[corres[i][0]];
-                const Eigen::Vector3d &vt = target_c.points_[corres[i][1]];
-                const Eigen::Matrix3d &Ct = target_c.covariances_[corres[i][1]];
+                const auto &corr = corres[i];
+                const Eigen::Vector3d &vs = source_c->points_[corr[0]];
+                const Eigen::Matrix3d &Cs = source_c->covariances_[corr[0]];
+                const Eigen::Vector3d &vt = target_c->points_[corr[1]];
+                const Eigen::Matrix3d &Ct = target_c->covariances_[corr[1]];
                 const Eigen::Vector3d d = vs - vt;
                 const Eigen::Matrix3d M = Ct + Cs;
                 const Eigen::Matrix3d W = M.inverse().sqrt();
@@ -190,9 +190,7 @@ RegistrationResult RegistrationGeneralizedICP(
                 "and source PointClouds.");
     }
 
-    // Compute the covariance matrix using normal information for target cloud.
-    auto target_c = InitializePointCloudForGeneralizedICP(target);
-    return RegistrationICP(source, *target_c, max_correspondence_distance, init,
+    return RegistrationICP(source, target, max_correspondence_distance, init,
                            estimation, criteria);
 }
 
