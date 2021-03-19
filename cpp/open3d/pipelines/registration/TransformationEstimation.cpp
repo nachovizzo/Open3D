@@ -85,7 +85,7 @@ Eigen::Matrix4d TransformationEstimationPointToPlane::ComputeTransformation(
     auto compute_jacobian_and_residual = [&](int i, Eigen::Vector6d &J_r,
                                              double &r, double &w) {
         const Eigen::Vector3d &vs = source.points_[corres[i][0]];
-        const Eigen::Vector3d &ns = source.normals_[corres[i][1]];
+        const Eigen::Vector3d &ns = source.normals_[corres[i][0]];
         const Eigen::Vector3d &vt = target.points_[corres[i][1]];
         const Eigen::Vector3d &nt = target.normals_[corres[i][1]];
         r = (vs - vt).dot(ns + nt);
